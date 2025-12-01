@@ -83,10 +83,7 @@ const CustomDrawerContent = (props: any) => {
       {!isLoggedIn ? (
         <TouchableOpacity
           style={styles.authButton}
-          onPress={() => {
-            props.navigation.navigate('login');
-            props.navigation.closeDrawer();
-          }}
+           onPress={() => props.navigation.navigate('login')}
         >
           <Icon name="sign-in" size={20} color="#fff" />
           <Text style={styles.authButtonText}>Login / Register</Text>
@@ -167,6 +164,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.1)',
     marginBottom: 16,
+   
   },
   logo: {
     width: 40,

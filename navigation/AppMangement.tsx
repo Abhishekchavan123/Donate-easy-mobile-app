@@ -10,6 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from '../screens/index';
 import { StackScreen } from 'react-native-screens';
 import CustomDrawerContent from './CustomDrawerContent';
+import LoginScreen from '../Auth/login';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -41,6 +42,9 @@ const DrawerNavigatorContainer = () => {
                     title: 'DonateEase',
                 }}
             />
+            <Drawer.Screen name="login" component={LoginScreen} />
+            <Drawer.Screen name="donate" component={Donate} />
+            
         </Drawer.Navigator>
     );
 };
@@ -66,6 +70,7 @@ const StackNavigatorContainer = () => {
                     title: 'Donate Food',
                 }}
             />
+            
         </Stack.Navigator>
     );
 };
@@ -77,9 +82,9 @@ const styles = StyleSheet.create({
 
 
     container: {
-    paddingTop: 10,
-    // other styles...
-  },
+        paddingTop: 10,
+        // other styles...
+    },
 
 
 

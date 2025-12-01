@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#000",
+    backgroundColor: "transparent",
     borderBottomWidth: 0.5,
     borderBottomColor: "rgba(255,255,255,0.2)",
   },
@@ -197,14 +197,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 20,
-    height: 20,
+    width: 40,
+    height: 40,
     borderRadius: 8,
     marginRight: 8,
   },
   logoText: {
-    fontSize: 15,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
     color: "#facc15", // yellow-400
   },
   menuButton: {
