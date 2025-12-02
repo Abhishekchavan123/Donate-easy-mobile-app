@@ -11,6 +11,7 @@ import HomeScreen from '../screens/index';
 import { StackScreen } from 'react-native-screens';
 import CustomDrawerContent from './CustomDrawerContent';
 import LoginScreen from '../Auth/login';
+import Register from '../Auth/Register';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -42,9 +43,12 @@ const DrawerNavigatorContainer = () => {
                     title: 'DonateEase',
                 }}
             />
-            <Drawer.Screen name="login" component={LoginScreen} />
-            <Drawer.Screen name="donate" component={Donate} />
             
+            <Drawer.Screen name="donate" component={Donate} />
+            <Drawer.Screen name="login" component={LoginScreen} />
+            <Drawer.Screen name="register" component={Register} />
+            
+
         </Drawer.Navigator>
     );
 };
@@ -70,7 +74,17 @@ const StackNavigatorContainer = () => {
                     title: 'Donate Food',
                 }}
             />
-            
+            <Stack.Screen name="login" component={LoginScreen} options={{
+                    title: 'login',
+                }} />
+            <Stack.Screen
+                name="register"
+                component={Register}
+                options={{
+                    title: 'Register',
+                }}
+            />
+
         </Stack.Navigator>
     );
 };
