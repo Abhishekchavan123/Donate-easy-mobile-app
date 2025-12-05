@@ -12,6 +12,8 @@ import { StackScreen } from 'react-native-screens';
 import CustomDrawerContent from './CustomDrawerContent';
 import LoginScreen from '../Auth/login';
 import Register from '../Auth/Register';
+import NgoForm from '../screens/ngo-form';
+import Contact from '../screens/contact';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -47,6 +49,8 @@ const DrawerNavigatorContainer = () => {
             <Drawer.Screen name="donate" component={Donate} />
             <Drawer.Screen name="login" component={LoginScreen} />
             <Drawer.Screen name="register" component={Register} />
+            <Drawer.Screen name="ngo-form" component={NgoForm} />
+            <Drawer.Screen name="contact" component={Contact} />
             
 
         </Drawer.Navigator>

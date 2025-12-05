@@ -61,7 +61,11 @@ const CustomDrawerContent = (props: any) => {
           <Text style={styles.menuText}>Donate Food</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}
+          onPress={() => {
+            props.navigation.navigate('ngo-form');
+            props.navigation.closeDrawer();
+          }}>
           <Icon name="handshake-o" size={20} color="#facc15" />
           <Text style={styles.menuText}>Join as NGO</Text>
         </TouchableOpacity>
@@ -71,7 +75,11 @@ const CustomDrawerContent = (props: any) => {
           <Text style={styles.menuText}>About Us</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}
+          onPress={() => {
+            props.navigation.navigate('contact');
+            props.navigation.closeDrawer();
+          }}>
           <Icon name="phone" size={20} color="#facc15" />
           <Text style={styles.menuText}>Contact Us</Text>
         </TouchableOpacity>
@@ -83,7 +91,7 @@ const CustomDrawerContent = (props: any) => {
       {!isLoggedIn ? (
         <TouchableOpacity
           style={styles.authButton}
-           onPress={() => props.navigation.navigate('login')}
+          onPress={() => props.navigation.navigate('login')}
         >
           <Icon name="sign-in" size={20} color="#fff" />
           <Text style={styles.authButtonText}>Login / Register</Text>
@@ -164,7 +172,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.1)',
     marginBottom: 16,
-   
+
   },
   logo: {
     width: 40,

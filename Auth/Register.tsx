@@ -13,6 +13,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+// Correct API URL for both Android emulator & iOS/Metro
+const API_URL ="http://localhost:4000";
+
 export default function DonateEaseRegister({ navigation }:any) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,7 +23,6 @@ export default function DonateEaseRegister({ navigation }:any) {
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Same validation logic as HTML
   const validate = () => {
     if (!name.trim() || !email.trim() || !password || !role) {
       Alert.alert("Error", "Please enter name, email, password and select role.");
@@ -35,14 +37,13 @@ export default function DonateEaseRegister({ navigation }:any) {
     setLoading(true);
 
     try {
-      // SAME endpoint + request body as HTML version
-      const res = await fetch("http://localhost:4000/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, role }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         Alert.alert("Error", data.error || "Registration failed");
@@ -52,7 +53,7 @@ export default function DonateEaseRegister({ navigation }:any) {
 
       Alert.alert(
         "Success",
-        "Registration successful! Please check your email to verify.",
+        data.message || "Registration successful! Please check your email.",
         [
           {
             text: "OK",
@@ -67,7 +68,8 @@ export default function DonateEaseRegister({ navigation }:any) {
       setPassword("");
       setRole("");
     } catch (err) {
-      Alert.alert("Network error", "Please try again.");
+      console.error("Register error:", err);
+      Alert.alert("Network Error", "Unable to connect to server.");
     }
 
     setLoading(false);
@@ -144,13 +146,17 @@ export default function DonateEaseRegister({ navigation }:any) {
             </View>
           </View>
 
-          {/* Submit Button */}
+          {/* Register Button */}
           <TouchableOpacity
             style={[styles.submit, loading && styles.submitDisabled]}
             onPress={handleRegister}
             disabled={loading}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Register</Text>}
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Register</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
@@ -167,10 +173,7 @@ export default function DonateEaseRegister({ navigation }:any) {
 
 // Styles ---------------------
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#f3f4f6",
-  },
+  screen: { flex: 1, backgroundColor: "#f3f4f6" },
   container: {
     paddingTop: 150,
     paddingBottom: 50,
@@ -192,14 +195,8 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     marginBottom: 16,
   },
-  field: {
-    marginBottom: 12,
-  },
-  label: {
-    color: "#374151",
-    marginBottom: 6,
-    fontWeight: "600",
-  },
+  field: { marginBottom: 12 },
+  label: { color: "#374151", marginBottom: 6, fontWeight: "600" },
   input: {
     borderWidth: 1,
     borderColor: "#D1D5DB",
@@ -207,10 +204,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
   },
-  roleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
+  roleRow: { flexDirection: "row", justifyContent: "space-between" },
   roleButton: {
     flex: 1,
     borderWidth: 1,
@@ -224,13 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F2FE",
     borderColor: "#60A5FA",
   },
-  roleText: {
-    fontWeight: "600",
-    color: "#374151",
-  },
-  roleTextActive: {
-    color: "#1D4ED8",
-  },
+  roleText: { fontWeight: "600", color: "#374151" },
+  roleTextActive: { color: "#1D4ED8" },
   submit: {
     backgroundColor: "#3B82F6",
     paddingVertical: 12,
@@ -238,20 +227,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
+  submitDisabled: { opacity: 0.6 },
+  submitText: { color: "#fff", fontWeight: "700" },
   footerText: {
     marginTop: 12,
     textAlign: "center",
     color: "#6B7280",
   },
-  loginLink: {
-    color: "#2563EB",
-    textDecorationLine: "underline",
-  },
+  loginLink: { color: "#2563EB", textDecorationLine: "underline" },
 });

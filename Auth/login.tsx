@@ -8,25 +8,24 @@ import {
   StyleSheet,
   Alert,
   Animated,
-  Image,
   Dimensions,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+
+import { API_URL } from "../config";
 
 type Props = {
   navigation?: any;
 };
 
 const { width, height } = Dimensions.get("window");
-
-const SLIDE_INTERVAL_MS = 5000; // 5s each (as in your HTML timing)
+const SLIDE_INTERVAL_MS = 5000; // 5s each
 
 const slides = [
-  // local images (ensure these exist in your project) or remote URIs
- 
   {
     uri:
       "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1950&q=80",
@@ -39,29 +38,35 @@ export default function LoginScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // animated opacities for crossfade
-  const opacityVals = useRef(slides.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))).current;
+  // Animated opacities for crossfade
+  const opacityVals = useRef(
+    slides.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))
+  ).current;
+
   const currentIndex = useRef(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // start slideshow
-    intervalRef.current = global.setInterval(() => {
-      const next = (currentIndex.current + 1) % slides.length;
-      crossfadeTo(next);
-      currentIndex.current = next;
-    }, SLIDE_INTERVAL_MS);
+    if (slides.length > 1) {
+      intervalRef.current = setInterval(() => {
+        const next = (currentIndex.current + 1) % slides.length;
+        crossfadeTo(next);
+        currentIndex.current = next;
+      }, SLIDE_INTERVAL_MS);
 
-    return () => {
-      // cleanup
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+      return () => {
+        if (intervalRef.current !== null) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    }
+    // nothing to cleanup if only one slide
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const crossfadeTo = (index: number) => {
-    // fade up the target to 1 and others to 0
-    const animations: Animated.CompositeAnimation[] = slides.map((_, i) =>
+    const animations = slides.map((_, i) =>
       Animated.timing(opacityVals[i], {
         toValue: i === index ? 1 : 0,
         duration: 800,
@@ -71,82 +76,59 @@ export default function LoginScreen({ navigation }: Props) {
     Animated.parallel(animations).start();
   };
 
-  const validate = () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter email and password.");
-      return false;
+  const getBaseUrl = () => {
+    if (API_URL && API_URL.length) return API_URL;
+    // fallback for Android emulator
+    if (Platform.OS === "android") {
+      return "http://10.0.2.2:4000";
     }
-    const re = /\S+@\S+\.\S+/;
-    if (!re.test(email.trim())) {
-      setError("Please enter a valid email address.");
-      return false;
-    }
-    setError(null);
-    return true;
+    return "http://localhost:4000";
   };
 
   const handleLogin = async () => {
-    if (!validate()) return;
+    setError(null);
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
 
     setLoading(true);
-    setError(null);
-
     try {
-      // NOTE: On a physical device, `localhost` refers to the device itself.
-      // Use your machine IP (e.g. http://192.168.x.x:4000) or ngrok for testing on device.
-      // Replace 192.168.x.x with your actual machine IP address
-      const API_URL = __DEV__ ? "http://YOUR_MACHINE_IP:4000" : "http://localhost:4000";
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password: password }),
-      });
+      const baseUrl = getBaseUrl();
+      const url = `${baseUrl}/api/auth/login`;
 
-      const data = await res.json();
+      // using axios for consistent handling
+      const resp = await axios.post(
+        url,
+        { email, password },
+        { headers: { "Content-Type": "application/json", Accept: "application/json" } }
+      );
 
-      if (!res.ok) {
-        setError(data.error || "Invalid email or password.");
-        setLoading(false);
-        return;
+      const data = resp.data;
+
+      if (resp.status >= 200 && resp.status < 300 && data?.access_token) {
+        await AsyncStorage.setItem("access_token", data.access_token);
+        if (data.refresh_token) {
+          await AsyncStorage.setItem("refresh_token", data.refresh_token);
+        }
+        navigation?.navigate("home");
+      } else {
+        const msg = data?.message || "Login failed.";
+        setError(msg);
+        Alert.alert("Error", msg);
       }
+    } catch (err: any) {
+      console.error("[SignIn] Error:", err);
 
-      // store token if present (matches your HTML)
-      if (data.session && data.session.access_token) {
-        await AsyncStorage.setItem("access_token", data.session.access_token);
-      }
-
-      try {
-        const meta = data.user && data.user.user_metadata ? data.user.user_metadata : {};
-        const fullName = meta.full_name || meta.name || "";
-        const role = meta.role || "user";
-        const userObj = {
-          email: (data.user && data.user.email) || email.trim(),
-          fullName: fullName || (email && email.split("@")[0]) || "User",
-          role,
-        };
-        await AsyncStorage.setItem("de_authUser", JSON.stringify(userObj));
-
-        Alert.alert("Login successful!", `Welcome ${userObj.fullName} (${userObj.role})`, [
-          {
-            text: "OK",
-            onPress: () => {
-              setEmail("");
-              setPassword("");
-              // navigate to Home (ensure route exists)
-              navigation?.navigate("Home");
-            },
-          },
-        ]);
-      } catch (storeErr) {
-        console.warn("Failed to store user data:", storeErr);
-        Alert.alert("Login successful", "But could not store some user data locally.");
-        navigation?.navigate("Home");
-      }
-
-      setLoading(false);
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Network error. Please try again.");
+      // axios error shape handling
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to connect to server.";
+      setError(msg);
+      Alert.alert("Error", msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -157,31 +139,23 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
-      {/* Slideshow: stack Animated.Image components */}
+      {/* Slideshow */}
       <View style={styles.slideshow}>
         {slides.map((src, i) => (
           <Animated.Image
             key={i}
             source={src as any}
-            style={[
-              styles.slide,
-              {
-                opacity: opacityVals[i],
-              },
-            ]}
+            style={[styles.slide, { opacity: opacityVals[i] }]}
             resizeMode="cover"
             accessible={false}
           />
         ))}
       </View>
 
-      {/* Dark overlay */}
       <View style={styles.overlay} pointerEvents="none" />
 
-      {/* Navbar (simple) */}
       <View style={styles.navbar}>
         <View style={styles.brand}>
-        
           <Text style={styles.brandText}>
             <Text style={styles.brandAccent}>Donate</Text>Easy
           </Text>
@@ -194,7 +168,6 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
       </View>
 
-      {/* Centered login card */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.centerContainer}
@@ -213,6 +186,7 @@ export default function LoginScreen({ navigation }: Props) {
               value={email}
               onChangeText={setEmail}
               editable={!loading}
+              textContentType="emailAddress"
             />
           </View>
 
@@ -223,9 +197,11 @@ export default function LoginScreen({ navigation }: Props) {
               placeholder="Enter password"
               placeholderTextColor="#666"
               secureTextEntry
+              autoCapitalize="none"
               value={password}
               onChangeText={setPassword}
               editable={!loading}
+              textContentType="password"
             />
           </View>
 
@@ -237,18 +213,10 @@ export default function LoginScreen({ navigation }: Props) {
               onPress={handleLogin}
               disabled={loading}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnText}>Login</Text>
-              )}
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Login</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.btn, styles.registerBtn]}
-              onPress={handleRegisterNav}
-              disabled={loading}
-            >
+            <TouchableOpacity style={[styles.btn, styles.registerBtn]} onPress={handleRegisterNav} disabled={loading}>
               <Text style={styles.btnText}>Register</Text>
             </TouchableOpacity>
           </View>
@@ -292,10 +260,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  logo: {
-    width: 40,
-    height: 40,
-  },
   brandText: {
     color: "#F9FAFB",
     fontSize: 22,
@@ -325,7 +289,7 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 420,
-    backgroundColor: "rgba(255,255,255,0.95)", // like bg-white bg-opacity-95
+    backgroundColor: "rgba(255,255,255,0.95)",
     padding: 20,
     borderRadius: 12,
     elevation: 8,
@@ -335,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     textAlign: "center",
-    color: "#059669", // green-600
+    color: "#059669",
     marginBottom: 14,
   },
 
@@ -363,8 +327,6 @@ const styles = StyleSheet.create({
 
   buttonsRow: {
     flexDirection: "row",
-    gap: 8,
-    // for older RN versions that don't support gap:
     justifyContent: "space-between",
   },
   btn: {
@@ -375,10 +337,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   loginBtn: {
-    backgroundColor: "#10B981", // green-500
+    backgroundColor: "#10B981",
   },
   registerBtn: {
-    backgroundColor: "#3B82F6", // blue-500
+    backgroundColor: "#3B82F6",
   },
   btnText: {
     color: "#fff",
