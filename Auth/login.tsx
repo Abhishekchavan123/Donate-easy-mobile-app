@@ -1,352 +1,340 @@
 // LoginScreen.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Animated,
   Dimensions,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-
-import { API_URL } from "../config";
+  StatusBar,
+  Alert,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNRestart from 'react-native-restart'; // <- production restart
+import { API_URL } from 'api/api';
 
 type Props = {
   navigation?: any;
 };
 
-const { width, height } = Dimensions.get("window");
-const SLIDE_INTERVAL_MS = 5000; // 5s each
+const { width, height } = Dimensions.get('window');
+const Api = "https://donateeasy-backend.onrender.com/";
 
-const slides = [
-  {
-    uri:
-      "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1950&q=80",
-  },
+const IMAGES = [
+  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/public/assets/bg3.jpg' },
+  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/public/assets/bg4.jpg' },
+  { uri: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1950&q=80' },
 ];
 
 export default function LoginScreen({ navigation }: Props) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Animated opacities for crossfade
-  const opacityVals = useRef(
-    slides.map((_, i) => new Animated.Value(i === 0 ? 1 : 0))
-  ).current;
-
+  // Animated values for crossfade
+  const fades = useRef(IMAGES.map(() => new Animated.Value(0))).current;
   const currentIndex = useRef(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cycleTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    if (slides.length > 1) {
-      intervalRef.current = setInterval(() => {
-        const next = (currentIndex.current + 1) % slides.length;
-        crossfadeTo(next);
-        currentIndex.current = next;
-      }, SLIDE_INTERVAL_MS);
+    fades.forEach((v, i) => v.setValue(i === 0 ? 1 : 0));
 
-      return () => {
-        if (intervalRef.current !== null) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      };
-    }
-    // nothing to cleanup if only one slide
+    const cycle = () => {
+      const next = (currentIndex.current + 1) % IMAGES.length;
+
+      Animated.parallel([
+        Animated.timing(fades[next], {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fades[currentIndex.current], {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        currentIndex.current = next;
+        cycleTimer.current = setTimeout(cycle, 3000) as any;
+      });
+    };
+
+    cycleTimer.current = setTimeout(cycle, 3000) as any;
+
+    return () => {
+      if (cycleTimer.current) clearTimeout(cycleTimer.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const crossfadeTo = (index: number) => {
-    const animations = slides.map((_, i) =>
-      Animated.timing(opacityVals[i], {
-        toValue: i === index ? 1 : 0,
-        duration: 800,
-        useNativeDriver: true,
-      })
-    );
-    Animated.parallel(animations).start();
-  };
-
-  const getBaseUrl = () => {
-    if (API_URL && API_URL.length) return API_URL;
-    // fallback for Android emulator
-    if (Platform.OS === "android") {
-      return "http://10.0.2.2:4000";
+  // production restart (requires react-native-restart installed & native rebuild)
+  const restartApplication = () => {
+    try {
+      RNRestart.Restart();
+    } catch (e) {
+      // If restart fails (shouldn't when installed and rebuilt), fallback to navigation reset
+      console.warn('RNRestart failed, falling back to navigation reset', e);
+      try {
+        navigation?.reset?.({ index: 0, routes: [{ name: 'home' }] });
+      } catch (_) {
+        navigation?.navigate?.('home');
+      }
     }
-    return "http://localhost:4000";
   };
 
   const handleLogin = async () => {
-    setError(null);
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      Alert.alert("Error", "Please enter both email and password");
+    setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter email and password.');
       return;
     }
 
     setLoading(true);
     try {
-      const baseUrl = getBaseUrl();
-      const url = `${baseUrl}/api/auth/login`;
+      // Use device-local host for emulator; change URL according to env
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() }),
+      });
 
-      // using axios for consistent handling
-      const resp = await axios.post(
-        url,
-        { email, password },
-        { headers: { "Content-Type": "application/json", Accept: "application/json" } }
-      );
-
-      const data = resp.data;
-
-      if (resp.status >= 200 && resp.status < 300 && data?.access_token) {
-        await AsyncStorage.setItem("access_token", data.access_token);
-        if (data.refresh_token) {
-          await AsyncStorage.setItem("refresh_token", data.refresh_token);
-        }
-        navigation?.navigate("home");
-      } else {
-        const msg = data?.message || "Login failed.";
-        setError(msg);
-        Alert.alert("Error", msg);
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
       }
-    } catch (err: any) {
-      console.error("[SignIn] Error:", err);
 
-      // axios error shape handling
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to connect to server.";
-      setError(msg);
-      Alert.alert("Error", msg);
+      if (!res.ok) {
+        const msg =
+          (data && (data.error || data.message)) ||
+          `Login failed (status ${res.status})`;
+        setError(msg);
+        setLoading(false);
+        return;
+      }
+
+      const token =
+        data?.session?.access_token || data?.access_token || data?.token || null;
+
+      if (token) {
+        await AsyncStorage.setItem('access_token', token);
+      }
+
+      const userFromResp =
+        data?.user || data?.session?.user || (data && data.user ? data.user : null);
+
+      let userObj: any = {
+        email: email.trim(),
+        fullName: email.trim().split('@')[0],
+        role: 'user',
+      };
+
+      if (userFromResp) {
+        const meta = userFromResp.user_metadata || userFromResp.metadata || {};
+        const fullName = meta.full_name || meta.name || userFromResp.fullName || userFromResp.name || userFromResp.email;
+        const role = meta.role || userFromResp.role || 'user';
+        userObj = {
+          email: userFromResp.email || userObj.email,
+          fullName: fullName || userObj.fullName,
+          role,
+        };
+      }
+
+      try {
+        await AsyncStorage.setItem('de_authUser', JSON.stringify(userObj));
+      } catch (err) {
+        console.warn('Failed to store user object', err);
+      }
+
+      // show brief success and then perform production restart
+      Alert.alert('Login successful', `Welcome ${userObj.fullName}`, [
+        {
+          text: 'OK',
+          onPress: () => {
+            // short timeout ensures alert dismissed then restart
+            setTimeout(() => restartApplication(), 150);
+          },
+        },
+      ]);
+    } catch (err: any) {
+      console.warn('Login network error', err);
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRegisterNav = () => {
-    navigation?.navigate("register");
-  };
-
   return (
-    <View style={styles.screen}>
-      {/* Slideshow */}
-      <View style={styles.slideshow}>
-        {slides.map((src, i) => (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* Background slideshow (absolute) */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        {IMAGES.map((img, i) => (
           <Animated.Image
             key={i}
-            source={src as any}
-            style={[styles.slide, { opacity: opacityVals[i] }]}
-            resizeMode="cover"
-            accessible={false}
+            source={img as any}
+            style={[
+              StyleSheet.absoluteFill,
+              { width, height, resizeMode: 'cover', opacity: fades[i] },
+            ]}
+            blurRadius={1}
           />
         ))}
+        <View style={styles.darkOverlay} />
       </View>
 
-      <View style={styles.overlay} pointerEvents="none" />
-
+      {/* Navbar (simplified) */}
       <View style={styles.navbar}>
-        <View style={styles.brand}>
-          <Text style={styles.brandText}>
-            <Text style={styles.brandAccent}>Donate</Text>Easy
-          </Text>
+        <View style={styles.brandRow}>
+          <Text style={styles.brand}>DonateEasy</Text>
         </View>
-
         <View style={styles.navLinks}>
-          <Text style={styles.navLink}>Home</Text>
-          <Text style={styles.navLink}>Join as NGO</Text>
-          <Text style={styles.navLink}>Contact</Text>
-        </View>
+          <TouchableOpacity
+            style={styles.navText}
+            onPress={() => {
+            
+              navigation.navigate("home");}}
+          >
+            
+            <Text style={styles.navText}>Home</Text>
+          </TouchableOpacity>
+
+      </View>
+    </View>
+
+      {/* Centered login box */ }
+  <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.center}>
+    <View style={styles.card}>
+      <Text style={styles.title}>Login to DonateEasy</Text>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          placeholder="Enter your email"
+          placeholderTextColor="#999"
+          style={styles.input}
+          editable={!loading}
+        />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.centerContainer}
-      >
-        <View style={styles.card}>
-          <Text style={styles.heading}>Login to DonateEasy</Text>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Enter password"
+          placeholderTextColor="#999"
+          style={styles.input}
+          editable={!loading}
+        />
+      </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#666"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              editable={!loading}
-              textContentType="emailAddress"
-            />
-          </View>
+      {!!error && <Text style={styles.error}>{error}</Text>}
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter password"
-              placeholderTextColor="#666"
-              secureTextEntry
-              autoCapitalize="none"
-              value={password}
-              onChangeText={setPassword}
-              editable={!loading}
-              textContentType="password"
-            />
-          </View>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginTxt}>Login</Text>}
+        </TouchableOpacity>
 
-          {error ? <Text style={styles.errorMsg}>{error}</Text> : null}
-
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity
-              style={[styles.btn, styles.loginBtn, loading && styles.btnDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Login</Text>}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.btn, styles.registerBtn]} onPress={handleRegisterNav} disabled={loading}>
-              <Text style={styles.btnText}>Register</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+        <TouchableOpacity
+          style={styles.registerBtn}
+          onPress={() => navigation && navigation.navigate ? navigation.navigate('register') : null}
+          disabled={loading}
+        >
+          <Text style={styles.registerTxt}>Register</Text>
+        </TouchableOpacity>
+      </View>
     </View>
+  </KeyboardAvoidingView>
+    </View >
   );
 }
 
+/* styles unchanged from your version */
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: '#000',
   },
-  slideshow: {
+  darkOverlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: -2,
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
-  slide: {
-    width,
-    height,
-    position: "absolute",
-    top: 0,
-    left: 0,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    zIndex: -1,
-  },
-
   navbar: {
-    marginTop: Platform.OS === "ios" ? 50 : 20,
-    marginHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
     zIndex: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  brand: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  brandText: {
-    color: "#F9FAFB",
-    fontSize: 22,
-    fontWeight: "700",
-    marginLeft: 8,
-  },
-  brandAccent: {
-    color: "#FDE047",
-  },
-  navLinks: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  navLink: {
-    color: "#fff",
-    marginLeft: 12,
-  },
+  brandRow: { flexDirection: 'row', alignItems: 'center' },
+  logo: { width: 44, height: 44, borderRadius: 8, marginRight: 8 },
+  brand: { color: '#FBBF24', fontSize: 22, fontWeight: '800' },
+  navLinks: { flexDirection: 'row', gap: 14 },
+  navText: { color: '#fff', marginHorizontal: 8, fontSize: 16 },
 
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   card: {
-    width: "100%",
+    width: '90%',
     maxWidth: 420,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    padding: 22,
     borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     elevation: 8,
   },
-
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#059669",
-    marginBottom: 14,
-  },
-
-  field: {
-    marginBottom: 12,
-  },
-  label: {
-    marginBottom: 6,
-    color: "#374151",
-    fontWeight: "600",
-  },
+  title: { fontSize: 20, color: '#047857', fontWeight: '700', textAlign: 'center', marginBottom: 14 },
+  inputGroup: { marginBottom: 12 },
+  label: { color: '#374151', marginBottom: 6, fontWeight: '600' },
   input: {
-    height: 44,
-    borderColor: "#D1D5DB",
     borderWidth: 1,
-    borderRadius: 8,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
     paddingHorizontal: 12,
-    backgroundColor: "#fff",
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#111827',
+    backgroundColor: '#fff',
   },
-
-  errorMsg: {
-    color: "#dc2626",
-    marginBottom: 10,
-  },
-
-  buttonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  btn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginHorizontal: 4,
-  },
+  error: { color: '#DC2626', marginBottom: 8 },
+  buttonRow: { flexDirection: 'row', marginTop: 6, gap: 10 },
   loginBtn: {
-    backgroundColor: "#10B981",
+    flex: 1,
+    backgroundColor: '#10B981',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
   },
+  loginTxt: { color: '#fff', fontWeight: '700' },
   registerBtn: {
-    backgroundColor: "#3B82F6",
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
   },
-  btnText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  btnDisabled: {
-    opacity: 0.7,
-  },
+  registerTxt: { color: '#fff', fontWeight: '700' },
 });

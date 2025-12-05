@@ -11,6 +11,7 @@ import {
   Modal,
   Pressable
 } from 'react-native';
+import { API_URL } from '../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -77,7 +78,7 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
 
     try {
-      const res = await fetch('http://localhost:4000/api/donations', {
+      const res = await fetch(`${API_URL}/api/donations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

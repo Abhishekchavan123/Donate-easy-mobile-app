@@ -13,22 +13,43 @@ import {
   Animated,
   Keyboard,
 } from "react-native";
+import { API_URL } from "../api/api";
 
 /**
  * Props:
  * - onSubmit(payload) : optional async function called with the form payload. If provided, component will await it.
- * - compact: boolean -> if true, removes SafeArea-like paddings making it embeddable in other layouts.
+ * - compact: boolean -> if true, removes outer paddings for embedding.
  * - initialValues: { name, email, subject, message }
  *
  * Exposed methods via ref:
  * - reset() : resets the form
  *
- * Usage:
- * const ref = useRef();
- * <ContactFormOnly ref={ref} onSubmit={async (p)=>{ ... }} compact />
- * ref.current.reset()
+ * Backend:
+ * - If onSubmit is NOT provided, component will POST to:
+ *    http://localhost:4000/api/contact
+ *   (change the URL below if you need 10.0.2.2 or an IP).
  */
-const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues = {} }, ref) => {
+const Api = "https://donateeasy-backend.onrender.com/";
+const BACKEND_URL = `${API_URL}/api/contact`; // change to 10.0.2.2:4000 or your machine IP when needed
+
+interface ContactFormProps {
+  onSubmit?: (payload: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    submittedAt: string;
+  }) => Promise<void> | void;
+  compact?: boolean;
+  initialValues?: {
+    name?: string;
+    email?: string;
+    subject?: string;
+    message?: string;
+  };
+}
+
+const ContactFormOnly = forwardRef<{ reset: () => void }, ContactFormProps>(({ onSubmit, compact = false, initialValues = {} }, ref) => {
   const [name, setName] = useState(initialValues.name || "");
   const [email, setEmail] = useState(initialValues.email || "");
   const [subject, setSubject] = useState(initialValues.subject || "");
@@ -36,6 +57,7 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const successAnim = useRef(new Animated.Value(0)).current;
+  
 
   // expose reset to parent via ref
   useImperativeHandle(ref, () => ({
@@ -54,8 +76,7 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
     }
   }, [showSuccess, successAnim]);
 
-  const validateEmail = (e) => {
-    // conservative, robust check
+  const validateEmail = (e:any) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
     return re.test(e);
   };
@@ -70,7 +91,7 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
   };
 
   const handleSubmit = async () => {
-    // quick client-side validation
+    // client-side validation
     if (!name.trim() || !email.trim() || !subject.trim() || !message.trim()) {
       Alert.alert("Missing fields", "Please fill all fields before submitting.");
       return;
@@ -91,15 +112,12 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
     // hide keyboard
     Keyboard.dismiss();
 
-    // If caller provided onSubmit, await it. Show loading.
+    // If a custom onSubmit is provided, use it
     if (onSubmit && typeof onSubmit === "function") {
       try {
         setLoading(true);
-        // allow onSubmit to be sync or async
         const result = onSubmit(payload);
-        if (result && typeof result.then === "function") {
-          await result;
-        }
+        if (result && typeof result.then === "function") await result;
         setLoading(false);
         setShowSuccess(true);
         resetForm();
@@ -107,15 +125,54 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
       } catch (err) {
         setLoading(false);
         console.warn("onSubmit error:", err);
-        Alert.alert("Submission error", err?.message || "Failed to submit. Try again.");
+        const errorMessage = err instanceof Error ? err.message : "Failed to submit. Try again.";
+        Alert.alert("Submission error", errorMessage);
         return;
       }
     }
 
-    // frontend-only fallback: log + show success
-    console.log("CONTACT FORM (local):", payload);
-    setShowSuccess(true);
-    resetForm();
+    // Default behavior: POST to BACKEND_URL
+    try {
+      setLoading(true);
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      // Attempt to parse JSON (some backends may not return JSON)
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        data = null;
+      }
+
+      setLoading(false);
+
+      if (res.ok) {
+        // success — trust backend message if present
+        const msg = (data && (data.message || data.msg)) || "Message sent successfully.";
+        setShowSuccess(true);
+        resetForm();
+        Alert.alert("Success", msg);
+        return;
+      } else {
+        // backend returned non-2xx
+        const errMsg = (data && (data.error || data.message)) || `Server responded with ${res.status}`;
+        console.warn("Contact submit failed:", res.status, data);
+        Alert.alert("Submission failed", errMsg);
+        return;
+      }
+    } catch (err) {
+      setLoading(false);
+      console.warn("Network error:", err);
+      // Helpful hint for emulator users:
+      Alert.alert(
+        "Network error",
+        `Could not reach the server. If you're using an Android emulator, try changing BACKEND_URL to http://10.0.2.2:4000/api/contact or use your machine IP. Error: ${err.message}`
+      );
+    }
   };
 
   // compact mode reduces outer paddings for embedding
@@ -192,11 +249,7 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
           accessibilityLabel="Send Message"
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>Send Message ✉</Text>
-          )}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Send Message ✉</Text>}
         </TouchableOpacity>
 
         {showSuccess && (
@@ -217,9 +270,7 @@ const ContactFormOnly = forwardRef(({ onSubmit, compact = false, initialValues =
             ]}
             accessibilityLiveRegion="polite"
           >
-            <Text style={styles.successText}>
-              ✅ Thank you! Your message has been received.
-            </Text>
+            <Text style={styles.successText}>✅ Thank you! Your message has been received.</Text>
           </Animated.View>
         )}
       </View>

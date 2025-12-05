@@ -14,6 +14,7 @@ import LoginScreen from '../Auth/login';
 import Register from '../Auth/Register';
 import NgoForm from '../screens/ngo-form';
 import Contact from '../screens/contact';
+import Dashboard from '../screens/dashboard';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -45,13 +46,21 @@ const DrawerNavigatorContainer = () => {
                     title: 'DonateEase',
                 }}
             />
-            
+
             <Drawer.Screen name="donate" component={Donate} />
             <Drawer.Screen name="login" component={LoginScreen} />
             <Drawer.Screen name="register" component={Register} />
             <Drawer.Screen name="ngo-form" component={NgoForm} />
             <Drawer.Screen name="contact" component={Contact} />
-            
+            <Drawer.Screen
+                name="home"
+                component={Index}
+                options={{
+                    title: 'DonateEase',
+                }}
+            />
+            <Drawer.Screen name="dashboard" component={Dashboard} />
+
 
         </Drawer.Navigator>
     );
@@ -79,8 +88,8 @@ const StackNavigatorContainer = () => {
                 }}
             />
             <Stack.Screen name="login" component={LoginScreen} options={{
-                    title: 'login',
-                }} />
+                title: 'login',
+            }} />
             <Stack.Screen
                 name="register"
                 component={Register}
