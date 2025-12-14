@@ -172,9 +172,9 @@ export default function HomeScreen({ navigation }: any) {
                   {(profileName && profileName.charAt(0).toUpperCase()) || "U"}
                 </Text>
               </View>
-              <Text style={styles.profileName} numberOfLines={1}>
+              {/* <Text style={styles.profileName} numberOfLines={1}>
                 {profileName}
-              </Text>
+              </Text> */}
             </TouchableOpacity>
 
             <Modal
@@ -185,13 +185,20 @@ export default function HomeScreen({ navigation }: any) {
             >
               <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
                 <View style={styles.dropdown}>
+                <View style={styles.dropdownRow} >
+                  <Text style={styles.profilename} numberOfLines={1}>
+                    {profileName}
+                  </Text>
+                  <View style={styles.divider} />
+                 </View>
                   <TouchableOpacity
                     onPress={() => {
                       setMenuVisible(false);
                       navigation.navigate("dashboard");
                     }}
-                    style={styles.dropdownRow}
+                    style={styles.profileMenuItem}
                   >
+                     <Icon name="dashboard" size={16} color="#999" />
                     <Text style={styles.menuItem}>Dashboard</Text>
                   </TouchableOpacity>
 
@@ -200,8 +207,9 @@ export default function HomeScreen({ navigation }: any) {
                       setMenuVisible(false);
                       navigation.navigate("Profile");
                     }}
-                    style={styles.dropdownRow}
+                    style={styles.profileMenuItem}
                   >
+                    <Icon name="user" size={16} color="#999" />
                     <Text style={styles.menuItem}>Edit Profile</Text>
                   </TouchableOpacity>
 
@@ -212,8 +220,9 @@ export default function HomeScreen({ navigation }: any) {
                       setMenuVisible(false);
                       handleLogout();
                     }}
-                    style={styles.dropdownRow}
+                    style={styles.profileMenuItem}
                   >
+                    <Icon name="user" size={16} color="#999" />
                     <Text style={[styles.menuItem, { color: "red" }]}>Logout</Text>
                   </TouchableOpacity>
                 </View>
@@ -365,8 +374,22 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   dropdownRow: { paddingVertical: 6, paddingHorizontal: 12 },
-  menuItem: { fontSize: 14, color: "#111" },
+  menuItem: { fontSize: 16, color: "#111" ,marginLeft: 12},
+  profilename: { fontSize: 16, fontWeight: "600", color: "#111"},
   divider: { height: 1, backgroundColor: "#ddd", marginVertical: 4 },
+   profileMenu: {
+    marginTop: 8,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  profileMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+
 
   modalOverlay: { flex: 1 },
 

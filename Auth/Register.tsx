@@ -95,8 +95,16 @@ export default function RegisterScreen({ navigation }: any) {
           </View>
 
           <View style={styles.navLinks}>
-            <Text style={styles.navText}>login</Text>
-            <Text style={styles.navText}>Contact</Text>
+            <TouchableOpacity
+
+              onPress={() => {
+
+                navigation.navigate("home");
+              }}
+            >
+
+              <Text style={styles.navText}>Home</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

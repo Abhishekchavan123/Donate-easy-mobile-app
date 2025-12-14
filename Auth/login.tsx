@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
   Alert,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart'; // <- production restart
@@ -26,12 +27,13 @@ const { width, height } = Dimensions.get('window');
 const Api = "https://donateeasy-backend.onrender.com/";
 
 const IMAGES = [
-  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/public/assets/bg3.jpg' },
-  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/public/assets/bg4.jpg' },
+  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/sign/assets/bg3.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmNiMWMxMC1iZmFiLTQ0NzgtOWY4My00NmIyMDgxZWIyZmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvYmczLmpwZyIsImlhdCI6MTc2MTQ0MzcyMiwiZXhwIjoxNzkyOTc5NzIyfQ.gqm65qMNTunq8XwHhdZ6YHmBfIgRJC7j0h9L8Zs3h6U' },
+  { uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/sign/assets/bg4.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmNiMWMxMC1iZmFiLTQ0NzgtOWY4My00NmIyMDgxZWIyZmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvYmc0LmpwZyIsImlhdCI6MTc1OTQ3Mzk5OSwiZXhwIjoxNzkxMDA5OTk5fQ.bIyYiFFbrs7lV238wnF6IVZvLgw7QbqkZAILBRwIAh0' },
   { uri: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1950&q=80' },
 ];
 
 export default function LoginScreen({ navigation }: Props) {
+  const scrollViewRef = useRef<ScrollView | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -260,7 +262,7 @@ export default function LoginScreen({ navigation }: Props) {
       </View>
     </View>
   </KeyboardAvoidingView>
-    </View >
+    </View> 
   );
 }
 

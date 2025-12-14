@@ -9,7 +9,9 @@ import {
   Alert,
   ImageBackground,
   Modal,
-  Pressable
+  Pressable,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import { API_URL } from '../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -117,13 +119,15 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   return (
     <ImageBackground
       source={{
-        uri: 'https://images.unsplash.com/photo-1593113589675-77323c9fee28?q=80&w=2070&auto=format&fit=crop',
+        uri: 'https://qsyyshbhsoqfaxoqdqwp.supabase.co/storage/v1/object/sign/assets/bg4.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83NmNiMWMxMC1iZmFiLTQ0NzgtOWY4My00NmIyMDgxZWIyZmMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJhc3NldHMvYmc0LmpwZyIsImlhdCI6MTc1OTQ3Mzk5OSwiZXhwIjoxNzkxMDA5OTk5fQ.bIyYiFFbrs7lV238wnF6IVZvLgw7QbqkZAILBRwIAh0',
       }}
       style={styles.background}
     >
       {/* Navbar */}
       <View style={styles.navbar}>
-        <Text style={styles.logo}>DonateEase</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('home')}>
+        <Text style={styles.logoText}>DonateEase</Text>
+        </TouchableOpacity>
         {isLoggedIn ? (
           <View>
             <TouchableOpacity
@@ -174,7 +178,7 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             </Modal>
           </View>
         ) : (
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => navigation.navigate('login')}>
             <Text style={styles.navLink}>Login</Text>
           </TouchableOpacity>
         )}
@@ -268,18 +272,17 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  navbar: {
-    backgroundColor: 'rgba(21, 128, 61, 0.8)',
-    padding: 15,
+ navbar: {
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    zIndex: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: "#111827",
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  logo: {
-    color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
+logoText: { fontSize: 28, fontWeight: "700", color: "#facc15" },
   navLink: {
     color: 'white',
     fontSize: 16,
