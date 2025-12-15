@@ -157,7 +157,7 @@ export default function LoginScreen({ navigation }: Props) {
       }
 
       // show brief success and then perform production restart
-      Alert.alert('Login successful', `Welcome ${userObj.fullName}`, [
+      Alert.alert('Login successful', `Welcome ${userObj.fullName}(${userObj.role})`, [
         {
           text: 'OK',
           onPress: () => {

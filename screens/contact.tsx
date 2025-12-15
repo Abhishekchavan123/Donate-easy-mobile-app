@@ -179,11 +179,13 @@ const ContactFormOnly = forwardRef<{ reset: () => void }, ContactFormProps>(({ o
   const containerStyle = compact ? styles.containerCompact : styles.container;
 
   return (
+    
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={containerStyle}
       keyboardVerticalOffset={Platform.select({ ios: 80, android: 0 })}
     >
+
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.cardTitle}>
           Send Us a Message
@@ -291,6 +293,27 @@ const styles = StyleSheet.create({
     padding: 0,
     backgroundColor: "transparent",
   },
+   navbar: {
+    width: "100%",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: "#111827",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  logoRow: { flexDirection: "row", alignItems: "center" },
+
+  logo: { width: 44, height: 44, borderRadius: 8, marginRight: 8 },
+
+  brand: { color: "#FBBF24", fontSize: 24, fontWeight: "800" },
+
+  navLinks: { flexDirection: "row", gap: 16 },
+
+  navText: { color: "#fff", fontSize: 16 },
+
   card: {
     backgroundColor: "#0b1220",
     borderRadius: 12,

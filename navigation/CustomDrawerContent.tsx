@@ -191,10 +191,10 @@ const CustomDrawerContent = (props: Props) => {
           <Text style={styles.menuText}>Join as NGO</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("about")}>
+        {/* <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("about")}>
           <Icon name="info-circle" size={20} color="#facc15" />
           <Text style={styles.menuText}>About Us</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.menuItem}

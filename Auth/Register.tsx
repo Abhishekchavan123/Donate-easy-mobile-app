@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from "react-native";
 import { API_URL } from "../api/api";
 
@@ -83,6 +84,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="#111827" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ width: "100%", alignItems: "center" }}

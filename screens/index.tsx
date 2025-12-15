@@ -244,7 +244,7 @@ export default function HomeScreen({ navigation }: any) {
             source={s as any}
             style={[
               StyleSheet.absoluteFillObject,
-              { width: width, height: 500, resizeMode: "cover", opacity: fades[i] },
+              { width: width, height: 700, resizeMode: "cover", opacity: fades[i] },
             ]}
             blurRadius={1}
           />
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   menuButton: { padding: 8 },
 
   container: { flex: 1, backgroundColor: "#111", paddingTop: 40 },
-  slideContainer: { height: 500, position: "relative" },
+  slideContainer: { height: 700, position: "relative" },
   slideImage: { width: "100%", height: "100%", resizeMode: "cover" },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.6)" },
   heroTextContainer: { position: "absolute", top: "30%", width: "100%", alignItems: "center", paddingHorizontal: 20 },
