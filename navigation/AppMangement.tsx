@@ -15,6 +15,7 @@ import Register from '../Auth/Register';
 import NgoForm from '../screens/ngo-form';
 import Contact from '../screens/contact';
 import Dashboard from '../screens/dashboard';
+import Profile from '../screens/profile';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -60,6 +61,7 @@ const DrawerNavigatorContainer = () => {
                 }}
             />
             <Drawer.Screen name="dashboard" component={Dashboard} />
+            <Drawer.Screen name="profile" component={Profile} />
 
 
         </Drawer.Navigator>
@@ -95,6 +97,13 @@ const StackNavigatorContainer = () => {
                 component={Register}
                 options={{
                     title: 'Register',
+                }}
+            />
+            <Stack.Screen
+                name="profile"
+                component={Profile}
+                options={{
+                    title: 'Profile',
                 }}
             />
 

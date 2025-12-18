@@ -16,7 +16,7 @@ import {
 import { API_URL } from '../api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import RNRestart from 'react-native-restart';
 type DonationForm = {
   food_type: string;
   quantity: string;
@@ -43,7 +43,19 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profileName, setProfileName] = useState('User');
   const [menuVisible, setMenuVisible] = useState(false);
-
+const restartApplication = () => {
+    try {
+      RNRestart.Restart();
+    } catch (e) {
+      // If restart fails (shouldn't when installed and rebuilt), fallback to navigation reset
+      console.warn('RNRestart failed, falling back to navigation reset', e);
+      try {
+        navigation?.reset?.({ index: 0, routes: [{ name: 'home' }] });
+      } catch (_) {
+        navigation?.navigate?.('home');
+      }
+    }
+  };
   // Load login info
   useEffect(() => {
     const loadUser = async () => {
@@ -92,7 +104,15 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         return;
       }
 
-      Alert.alert('Success', 'Donation submitted successfully!');
+      Alert.alert('Success', 'Donation submitted successfully!',[
+        {
+          text: 'OK',
+          onPress: () => {
+            // short timeout ensures alert dismissed then restart
+            setTimeout(() => restartApplication(), 150);
+          },
+        },
+      ]);
       setForm({
         food_type: '',
         quantity: '',
@@ -123,8 +143,11 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       }}
       style={styles.background}
     >
+      <View style={styles.overlay}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="#111827" />
       {/* Navbar */}
       <View style={styles.navbar}>
+        
         <TouchableOpacity onPress={() => navigation.navigate('home')}>
         <Text style={styles.logoText}>DonateEase</Text>
         </TouchableOpacity>
@@ -153,18 +176,18 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 onPress={() => setMenuVisible(false)}
               >
                 <View style={styles.dropdown}>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     onPress={() => {
                       setMenuVisible(false);
                       navigation.navigate('Dashboard');
                     }}
                   >
                     <Text style={styles.menuItem}>Dashboard</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                   <TouchableOpacity
                     onPress={() => {
                       setMenuVisible(false);
-                      navigation.navigate('Profile');
+                      navigation.navigate('profile');
                     }}
                   >
                     <Text style={styles.menuItem}>Edit Profile</Text>
@@ -262,6 +285,7 @@ const DonateScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </View>
     </ImageBackground>
   );
 };
@@ -272,6 +296,10 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
+   overlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.65)",
+    },
  navbar: {
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
     zIndex: 10,
@@ -282,6 +310,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
 logoText: { fontSize: 28, fontWeight: "700", color: "#facc15" },
   navLink: {
     color: 'white',

@@ -8,6 +8,8 @@ import {
     Alert,
     StyleSheet,
     ScrollView,
+      StatusBar,
+        Platform,
     SafeAreaView,
     ImageBackground,
 } from "react-native";
@@ -29,7 +31,7 @@ const TIME_SLOTS = [
     "Evening (6 PM - 10 PM)",
 ];
 
-export default function VolunteerRegisterScreen() {
+export default function VolunteerRegisterScreen({navigation}:any) {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
@@ -91,7 +93,7 @@ export default function VolunteerRegisterScreen() {
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+      
             <ImageBackground
                 // replace with your actual image path or remove if you don't want a background image
                 source={{
@@ -101,8 +103,11 @@ export default function VolunteerRegisterScreen() {
                 resizeMode="cover"
             >
                 <View style={styles.overlay}>
+                     <StatusBar barStyle="light-content" translucent backgroundColor="#111827" />
                     <View style={styles.navbar}>
-                        <Text style={styles.brand}>DonateEasy</Text>
+                         <TouchableOpacity onPress={() => navigation.navigate('home')}>
+                                <Text style={styles.logoText}>DonateEase</Text>
+                                </TouchableOpacity>
                         <Text style={styles.navLink}>Join as Volunteer</Text>
                     </View>
 
@@ -252,7 +257,7 @@ export default function VolunteerRegisterScreen() {
                     </ScrollView>
                 </View>
             </ImageBackground>
-        </SafeAreaView>
+   
     );
 }
 
@@ -268,21 +273,25 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "rgba(0,0,0,0.65)",
     },
-    navbar: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: "rgba(0,0,0,0.75)",
-    },
-    brand: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#F9FAFB",
-    },
+     navbar: {
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    zIndex: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: "#111827",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+logoText: { fontSize: 28, fontWeight: "700", color: "#facc15" },
+  navLink: {
+    color: 'white',
+    fontSize: 16,
+  },
+
+
     navLink: {
-        fontSize: 14,
+        fontSize: 16,
         color: "#FBBF24",
     },
     scrollContainer: {

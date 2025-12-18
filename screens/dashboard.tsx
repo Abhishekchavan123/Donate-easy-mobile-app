@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  StatusBar,
+  Platform,
   Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -85,7 +87,7 @@ export default function VolunteerDashboard({ navigation }: any) {
             accuracy: Location.Accuracy.High,
             distanceInterval: 10,
           },
-          () => {}
+          () => { }
         );
       }
     } catch {
@@ -198,6 +200,7 @@ export default function VolunteerDashboard({ navigation }: any) {
 
   return (
     <View style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="#111827" />
       {/* Navbar */}
       <View style={styles.navbar}>
         <Text style={styles.brand}>DonateEasy</Text>
@@ -230,13 +233,30 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 12, backgroundColor: "#F3F4F6" },
   header: { fontSize: 22, fontWeight: "800", marginBottom: 12 },
 
-  navbar: {
+   navbar: {
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44,
+    zIndex: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     backgroundColor: "#111827",
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  brand: { color: "#FBBF24", fontSize: 22, fontWeight: "800" },
+logoText: { fontSize: 28, fontWeight: "700", color: "#facc15" },
+  navLink: {
+    color: 'white',
+    fontSize: 16,
+  },
+
+  logoRow: { flexDirection: "row", alignItems: "center" },
+
+  logo: { width: 44, height: 44, borderRadius: 8, marginRight: 8 },
+
+  brand: { color: "#FBBF24", fontSize: 28, fontWeight: "800" },
+
+  navLinks: { flexDirection: "row", gap: 16 },
+
   navText: { color: "#fff", fontSize: 16 },
 
   card: {

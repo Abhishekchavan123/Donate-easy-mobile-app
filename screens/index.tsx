@@ -205,7 +205,7 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     onPress={() => {
                       setMenuVisible(false);
-                      navigation.navigate("Profile");
+                      navigation.navigate("profile");
                     }}
                     style={styles.profileMenuItem}
                   >
